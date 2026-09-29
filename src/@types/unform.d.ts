@@ -4,7 +4,7 @@ declare module '@unform/web' {
 
   export interface FormProps<T = Record<string, unknown>> {
     initialData?: Record<string, unknown>;
-    onSubmit(data: T): void;
+    onSubmit?: (data: T) => void;
     children?: ReactNode;
     ref?: Ref<FormHandles>;
   }
