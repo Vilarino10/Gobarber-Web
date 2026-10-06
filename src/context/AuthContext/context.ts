@@ -5,9 +5,10 @@ export interface SignInCredentials {
   password: string;
 }
 
-interface AuthContextData {
-  name: string;
+export interface AuthContextData {
+  user: object;
   signIn(data: { email: string; password: string }): Promise<void>;
+  signOut(): void;
 }
 
 export const AuthContext = createContext<AuthContextData>(
