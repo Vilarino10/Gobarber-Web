@@ -4,6 +4,12 @@ import { useRef } from 'react';
 import { Form } from '@unform/web';
 import type { FormHandles } from '@unform/core';
 import * as Yup from 'yup';
+import { Link, useNavigate } from 'react-router-dom';
+
+import api from '../../services/api';
+
+import { useToast } from '../../hooks/useToast';
+
 import getValidationErros from '../../utils/getValidationErrors';
 
 import logoImg from '../../assets/logo.svg';
@@ -11,7 +17,7 @@ import logoImg from '../../assets/logo.svg';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 
-import { Container, Content, Background } from './styles';
+import { Container, Content, AnimationContainer, Background } from './styles';
 
 interface SignUpFormData {
   name: string;
@@ -21,61 +27,86 @@ interface SignUpFormData {
 
 const SignUp: React.FC = () => {
   const formRef = useRef<FormHandles>(null);
+  const { addToast } = useToast();
+  const navigate = useNavigate();
 
-  const handleSubmit = useCallback(async (data: SignUpFormData) => {
-    try {
-      formRef.current?.setErrors({});
+  const handleSubmit = useCallback(
+    async (data: SignUpFormData) => {
+      try {
+        formRef.current?.setErrors({});
 
-      const schema = Yup.object().shape({
-        name: Yup.string().required('Nome Obrigatório'),
-        email: Yup.string()
-          .required('E-mail Obrigatório')
-          .email('Digite um E-mail válido'),
-        password: Yup.string()
-          .required('Senha Obrigatória')
-          .min(6, 'No minímo 6 dígitos'),
-      });
+        const schema = Yup.object().shape({
+          name: Yup.string().required('Nome Obrigatório'),
+          email: Yup.string()
+            .required('E-mail Obrigatório')
+            .email('Digite um E-mail válido'),
+          password: Yup.string()
+            .required('Senha Obrigatória')
+            .min(6, 'No minímo 6 dígitos'),
+        });
 
-      await schema.validate(data, {
-        abortEarly: false,
-      });
-    } catch (err) {
-      console.log(err);
+        await schema.validate(data, {
+          abortEarly: false,
+        });
 
-      if (err instanceof Yup.ValidationError) {
-        const errors = getValidationErros(err);
+        await api.post('/users', data);
 
-        formRef.current?.setErrors(errors);
+        navigate('/');
+
+        addToast({
+          type: 'success',
+          title: 'Cadastro realizado!',
+          description: 'Voce ja pode fazer seu logon no GoBarber!',
+        });
+      } catch (err) {
+        console.log(err);
+
+        if (err instanceof Yup.ValidationError) {
+          const errors = getValidationErros(err);
+
+          formRef.current?.setErrors(errors);
+
+          return;
+        }
+
+        addToast({
+          type: 'error',
+          title: 'Erro na Cadastro',
+          description: 'Ocorreu um erro ao fazer cadastro, tente novamente.',
+        });
       }
-    }
-  }, []);
+    },
+    [addToast, navigate],
+  );
 
   return (
     <Container>
       <Background />
       <Content>
-        <img src={logoImg} alt="GoBarber" />
+        <AnimationContainer>
+          <img src={logoImg} alt="GoBarber" />
 
-        <Form ref={formRef} onSubmit={handleSubmit}>
-          <h1>Faça seu Cadastro</h1>
+          <Form ref={formRef} onSubmit={handleSubmit}>
+            <h1>Faça seu Cadastro</h1>
 
-          <Input name="name" icon={FiUser} placeholder="Nome" />
-          <Input name="email" icon={FiMail} placeholder="E-mail" />
+            <Input name="name" icon={FiUser} placeholder="Nome" />
+            <Input name="email" icon={FiMail} placeholder="E-mail" />
 
-          <Input
-            name="password"
-            icon={FiLock}
-            type="password"
-            placeholder="Senha"
-          />
+            <Input
+              name="password"
+              icon={FiLock}
+              type="password"
+              placeholder="Senha"
+            />
 
-          <Button type="submit">Cadastrar</Button>
-        </Form>
+            <Button type="submit">Cadastrar</Button>
+          </Form>
 
-        <a href="login">
-          <FiArrowLeft />
-          Voltar para Logon
-        </a>
+          <Link to="/">
+            <FiArrowLeft />
+            Voltar para Logon
+          </Link>
+        </AnimationContainer>
       </Content>
     </Container>
   );
